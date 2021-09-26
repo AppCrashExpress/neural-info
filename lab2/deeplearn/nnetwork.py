@@ -71,7 +71,7 @@ class LinearNeuralNetwork:
         self._epoch         = epoch
         self._learning_rate = learning_rate
 
-    def train(self, train_data, *, loss_func):
+    def train(self, train_data, train_labels, *, loss_func):
         td_size = len(train_data)
 
         for _ in range(self._epoch):
@@ -80,7 +80,7 @@ class LinearNeuralNetwork:
                 # Most of framework is made for 2D (sample_size, feats) matrices
                 # So, generalize
                 data   = np.expand_dims(train_data[i:frame_end], 0)
-                target = np.expand_dims(train_data[frame_end], 0)
+                target = np.expand_dims(train_labels[frame_end], 0)
 
                 y_prob = self._forward_calc(data)
                 loss   = loss_func.calc_forward(y_prob, target)
