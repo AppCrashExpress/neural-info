@@ -10,7 +10,7 @@ class MSELoss:
         return diffs.mean(axis=1)
 
     def calc_backward(self, _):
-        return 2 * (self.p - self.y)
+        return self.p - self.y
 
     def update(self, _):
         # Nothing to update
