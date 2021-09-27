@@ -69,6 +69,7 @@ class LinearNeuralNetwork:
         if window < 1:
             raise ValueError("Window cannot be lower than 1")
         self._epoch         = epoch
+        self._window        = window
         self._learning_rate = learning_rate
 
     def train(self, train_data, train_labels, *, loss_func):
@@ -88,14 +89,38 @@ class LinearNeuralNetwork:
                 self._backward_calc(loss, loss_func)
                 self._update_all()
 
-    def predict(self, input_data):
+    def predict(self, input_data, *, predict_size=None):
+        window = self._window
         id_size = len(input_data)
-        res = np.zeros((id_size - self._window))
 
-        for i in range(0, id_size - self._window):
-            frame_end = i + self._window
-            data   = np.expand_dims(input_data[i:frame_end], 0)
+        if id_size < window:
+            raise ValueError(f"Not enough data to predict (have {id_size}, need at least {window}")
+
+        if predict_size is None:
+            predict_size = id_size - window
+
+        can_predict = id_size - window + 1
+        can_predict = can_predict if can_predict < window else predict_size
+        if can_predict < window and predict_size > can_predict:
+            raise ValueError(f"Can only predict {can_predict} when expected {predict_size}")
+
+        res = np.zeros((predict_size, ))
+
+        # Predict size can be less then we can infere from input data or more
+        # If it is less, infere what is needed
+        # If it is more, additionally infere from our predictions
+        split_point = min(predict_size, id_size - window)
+
+        for i in range(0, split_point):
+            frame_end = i + window
+            data = np.expand_dims(input_data[i:frame_end], 0)
             res[i] = self._forward_calc(data)
+
+        for i in range(split_point, predict_size):
+            frame_start = i - window
+            data = np.expand_dims(res[frame_start:i], 0)
+            res[i] = self._forward_calc(data)
+
         return res
 
     def _forward_calc(self, train_data):
